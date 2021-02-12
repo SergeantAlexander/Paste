@@ -1,10 +1,11 @@
 {
+
+  "hash": "",
   "title": "title",
   "syntax": "java",
   "expiration": "hour",
   "exposure": "public",
-  "enabledPass": true,
   "password": "somePass",
-  "burnAfterRead": false,
   "paste": "some paste"
+
 }
