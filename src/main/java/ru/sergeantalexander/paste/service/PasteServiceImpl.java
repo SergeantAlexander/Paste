@@ -4,9 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import ru.sergeantalexander.paste.entity.Paste;
+import ru.sergeantalexander.paste.enumiration.Expiration;
+import ru.sergeantalexander.paste.enumiration.Exposure;
 import ru.sergeantalexander.paste.repository.PasteRepository;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -21,9 +25,8 @@ public class PasteServiceImpl implements PasteService {
     private Pair<Integer, Character> pair;
     private Integer numberForChange;
 
-
     {
-        String stuff = "1234567890AaBbCcDdEeFfGgHhIiGgKkLlMmOoPpQqRrSsTtUuVvWwXxYyZz";
+        String stuff = "1234567890AaBbCcDdEeFfGgHhIiJjKkLlMmOoPpQqRrSsTtUuVvWwXxYyZz";
         char[] chars = stuff.toCharArray();
         for (Character character : chars) {
             count++;
@@ -32,12 +35,30 @@ public class PasteServiceImpl implements PasteService {
     }
 
     @Override
-    public Paste getPasteByHash(Long hash) {
-        return repository.getOne(hash);
+    public List<Paste> getLastTen() {
+        return repository.findFirst10ByExposureEqualsAndPasteExpiredTimeAfterOrderByPastePlacementTimeDesc
+                (Exposure.PUBLIC, LocalDateTime.now());
     }
 
     @Override
-    public void storePaste(Paste paste) {
+    public List<Paste> getAllOfPasts() {
+        return repository.findAll();
+    }
+
+    @Override
+    public Paste getPasteByHash(String hash) {
+        Paste paste = repository.getOneByHash(hash);
+        if (paste != null) {
+            if (paste.isBurn()) {
+                repository.delete(paste);
+            }
+            return paste.getPasteExpiredTime().isAfter(LocalDateTime.now()) ? paste : null;
+        }
+        return null;
+    }
+
+    @Override
+    public Paste storePaste(Paste paste) {
         //хэши имеют значения от 11111111 до zzzzzzzz и вертятся по кругу, однако некоторые записи будут
         //жить вечно, поэтому некоторые хэши будут перманентно заняты. Поэтому делаем (пока примитивно) проверку
         //на занятость хэша.
@@ -45,11 +66,16 @@ public class PasteServiceImpl implements PasteService {
         do {
             newHash = makeHash(lastHash);
             lastHash = newHash;
-        } while (repository.getOneByHash(newHash)!=null);
+        } while (repository.getOneByHash(newHash) != null);
         paste.setHash(newHash);
+        paste.setPastePlacementTime(LocalDateTime.now());
+        paste.setPasteExpiredTime(Expiration.getDateForExpiring(paste.getExpiration()));
+        if (paste.isBurn() || paste.getExposure() == Exposure.PUBLIC) {
+            paste.setExposure(Exposure.UNLISTED);
+        }
         repository.save(paste);
+        return repository.getOneByHash(paste.getHash());
     }
-
 
     private String makeHash(String lastHash) {
         //при перезагрузке приложения запрашивает последний хэш
