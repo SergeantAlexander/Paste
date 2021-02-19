@@ -2,10 +2,16 @@ package ru.sergeantalexander.paste.service;
 
 import ru.sergeantalexander.paste.entity.Paste;
 
+import java.util.List;
+
 public interface PasteService {
 
-    Paste getPasteByHash (Long hash);
+    List<Paste> getLastTen();
 
-    void storePaste (Paste paste);
+    List<Paste> getAllOfPasts();
+
+    Paste getPasteByHash(String hash);
+
+    Paste storePaste(Paste paste);
 
 }
