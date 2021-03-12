@@ -1,0 +1,14 @@
+syntax = "proto3";
+package ru.sergeantalexander.paste.client;
+
+message Request {
+string name = 1;
+}
+
+message Response {
+string position = 1;
+}
+
+service Service {
+  rpc getPosition (Request) returns (Response);
+}

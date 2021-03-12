@@ -3,9 +3,11 @@ package ru.sergeantalexander.paste.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.sergeantalexander.paste.JsonRequestMapping;
+import ru.sergeantalexander.paste.client.GrpcServ;
 import ru.sergeantalexander.paste.entity.Paste;
 import ru.sergeantalexander.paste.service.PasteService;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -33,8 +35,14 @@ public class PasteController {
     }
 
     @JsonRequestMapping(value = "/last", method = RequestMethod.GET)
-    public List<Paste> getLastTen() {
+    public List<Paste> getLastTen() throws IOException {
         return service.getLastTen();
+    }
+
+    @JsonRequestMapping(value = "/pos", method = RequestMethod.GET)
+    public String getPosition() {
+        return service.getPosition();
+
     }
 
 }

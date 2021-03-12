@@ -3,6 +3,8 @@ package ru.sergeantalexander.paste.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import ru.sergeantalexander.paste.client.GrpcServ;
+import ru.sergeantalexander.paste.client.grpc.GrpcClient;
 import ru.sergeantalexander.paste.entity.Paste;
 import ru.sergeantalexander.paste.enumiration.Expiration;
 import ru.sergeantalexander.paste.enumiration.Exposure;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 @Service
 public class PasteServiceImpl implements PasteService {
@@ -19,6 +22,10 @@ public class PasteServiceImpl implements PasteService {
     @Autowired
     PasteRepository repository;
 
+    @Autowired
+    GrpcClient grpcClient;
+
+    private static final Logger log = Logger.getLogger(PasteServiceImpl.class.getName());
     private final Map<Integer, Character> alphabet = new HashMap<>();
     Integer count = -1;
     private String lastHash = null;
@@ -36,12 +43,14 @@ public class PasteServiceImpl implements PasteService {
 
     @Override
     public List<Paste> getLastTen() {
+        log.info("getLastTen method called");
         return repository.findFirst10ByExposureEqualsAndPasteExpiredTimeAfterOrderByPastePlacementTimeDesc
                 (Exposure.PUBLIC, LocalDateTime.now());
     }
 
     @Override
     public List<Paste> getAllOfPasts() {
+        log.info("getAllOfPasts method called");
         return repository.findAll();
     }
 
@@ -75,6 +84,11 @@ public class PasteServiceImpl implements PasteService {
         }
         repository.save(paste);
         return repository.getOneByHash(paste.getHash());
+    }
+
+    @Override
+    public String getPosition() {
+        return grpcClient.getPosition();
     }
 
     private String makeHash(String lastHash) {
